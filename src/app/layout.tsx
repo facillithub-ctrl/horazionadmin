@@ -1,36 +1,125 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import "./globals.css";
+"use client"; // Obrigatório para usar hooks (useEffect, useRouter)
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins",
-  display: "swap",
-});
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase"; // Usando o @ configurado no tsconfig
 
-export const metadata: Metadata = {
-  title: "Horazion Admin | Gestão Central",
-  description: "Painel Administrativo do Ecossistema Horazion",
-};
+// Componente auxiliar para item de menu
+const MenuItem = ({ icon, label, href }: { icon: string; label: string; href: string }) => (
+  <Link 
+    href={href}
+    className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-horazion-red transition-all group"
+  >
+    <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">
+      {icon}
+    </span>
+    <span className="text-sm font-medium">{label}</span>
+  </Link>
+);
 
-export default function RootLayout({
+const MenuSection = ({ title }: { title: string }) => (
+  <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-6 mb-2 px-3">
+    {title}
+  </p>
+);
+
+export default function DashboardLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
+
+  // PROTEÇÃO DE ROTA: Verifica se existe usuário logado
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Se não tiver sessão, manda pro login
+        router.replace("/login");
+      } else {
+        // Se tiver, libera o acesso
+        setAuthorized(true);
+      }
+    };
+
+    checkUser();
+  }, [router]);
+
+  // Enquanto verifica, mostra um loading simples (opcional, mas recomendado)
+  if (!authorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F7FE]">
+         <span className="material-symbols-outlined animate-spin text-horazion-red text-4xl">
+            progress_activity
+         </span>
+      </div>
+    );
+  }
+
   return (
-    <html lang="pt-br">
-      <head>
-        {/* Google Icons (Material Symbols) */}
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" 
-        />
-      </head>
-      <body className={`${poppins.variable} font-sans antialiased`}>
-        {children}
-      </body>
-    </html>
+    <div className="flex min-h-screen bg-horazion-adminBg">
+      {/* SIDEBAR */}
+      <aside className="w-[260px] bg-white border-r border-gray-100 flex flex-col fixed h-full z-50">
+        
+        {/* Logo Area */}
+        <div className="h-20 flex items-center px-6 border-b border-gray-50">
+           <h1 className="text-xl font-bold text-horazion-red tracking-tight flex items-center gap-2">
+             <span className="material-symbols-outlined">grid_view</span>
+             ADMIN
+           </h1>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          
+          <MenuItem icon="dashboard" label="Visão Geral" href="/" />
+
+          <MenuSection title="Gestão de Conteúdo" />
+          <MenuItem icon="article" label="Blogs & Artigos" href="/content/blogs" />
+          <MenuItem icon="update" label="Atualizações" href="/content/updates" />
+          <MenuItem icon="notifications" label="Notificações App" href="/content/notifications" />
+
+          <MenuSection title="Administrativo" />
+          <MenuItem icon="group" label="Usuários" href="/management/users" />
+          <MenuItem icon="settings" label="Configurações" href="/management/settings" />
+          
+          <MenuSection title="Comunicação" />
+          <MenuItem icon="mail" label="Fale Conosco" href="/messages" />
+
+        </nav>
+
+        {/* User Footer */}
+        <div className="p-4 border-t border-gray-50">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="w-8 h-8 rounded-full bg-horazion-red text-white flex items-center justify-center text-xs font-bold">
+              AD
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-gray-900">Admin User</p>
+              <button 
+                onClick={async () => {
+                    await supabase.auth.signOut();
+                    router.push("/login");
+                }}
+                className="text-[10px] text-red-500 hover:underline cursor-pointer"
+              >
+                Sair do Sistema
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 ml-[260px] p-8">
+        <div className="max-w-6xl mx-auto">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }
