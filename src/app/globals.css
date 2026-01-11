@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Cores Primárias Horazion Group */
+  --horazion-red: #B6192E;
+  --horazion-black: #000000;
+  --horazion-grey: #545454;
+  --horazion-white: #FFFFFF;
+  
+  /* Fundo da Página Admin */
+  --horazion-bg-page: #F4F7FE; 
+}
+
+@layer base {
+  body {
+    background-color: var(--horazion-bg-page);
+    color: var(--horazion-black);
+    font-family: var(--font-poppins), sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-semibold;
+    color: var(--horazion-black);
+  }
+
+  p {
+    @apply font-normal;
+    color: var(--horazion-grey);
+  }
+}
+
+/* Utilitários personalizados para Scrollbar do Admin */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+  }
+  .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+  }
+}
